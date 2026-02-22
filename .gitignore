@@ -10,3 +10,15 @@ __pycache__/
 **/pip-wheel-metadata/**
 
 .mypy_cache/
+
+# Local environments and OS files
+.DS_Store
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Generated experiment outputs
+01-toxic-review-classification/models/
+02-func-name-suggestion/artifacts/
