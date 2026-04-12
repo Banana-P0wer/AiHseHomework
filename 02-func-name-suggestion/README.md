@@ -46,7 +46,7 @@ def some_function(x):
 ### 1. Подготовка данных
 
 Эксперимент подготовки данных проведён в блокноте
-[`01_dataset_overview.ipynb`](./01_dataset_overview.ipynb).
+[`01_data_preparation.ipynb`](./01_data_preparation.ipynb).
 
 Для разбора исходного кода используется библиотека `tree-sitter`. Она
 позволяет работать с синтаксической структурой Python-функции, а не извлекать
@@ -65,7 +65,7 @@ def some_function(x):
 ### 2. Генерация имён функций
 
 Эксперимент с моделью проведён в блокноте
-[`02_model_inference_eval.ipynb`](./02_model_inference_eval.ipynb).
+[`02_model_experiment.ipynb`](./02_model_experiment.ipynb).
 
 Используется предобученная модель `Salesforce/codet5p-220m` без
 дополнительного обучения. Имя функции заменяется специальным маркером
@@ -125,8 +125,8 @@ def some_function(x):
 
 ```text
 02-func-name-suggestion/
-├── 01_dataset_overview.ipynb       # подготовка данных
-├── 02_model_inference_eval.ipynb   # генерация имён и оценка
+├── 01_data_preparation.ipynb       # подготовка данных
+├── 02_model_experiment.ipynb       # генерация имён и оценка
 ├── 03_conclusions.ipynb            # итоговые выводы
 └── requirements.txt                # зависимости
 ```
@@ -142,8 +142,8 @@ jupyter lab
 
 Блокноты необходимо выполнить по порядку:
 
-1. `01_dataset_overview.ipynb`;
-2. `02_model_inference_eval.ipynb`;
+1. `01_data_preparation.ipynb`;
+2. `02_model_experiment.ipynb`;
 3. `03_conclusions.ipynb`.
 
 После первого шага подготовленный набор данных сохраняется в каталог
