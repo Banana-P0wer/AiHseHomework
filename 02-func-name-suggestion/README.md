@@ -1,13 +1,13 @@
-# Практическое задание №2: генерация имени функции по её телу
+# Practical Assignment 02: Function Name Suggestion
 
-## Описание задания
+## Problem Statement
 
-Цель работы — разработать решение на языке Python для предсказания имени
-функции по её реализации. В качестве исходных данных используются реальные
-функции из открытых репозиториев, а в качестве модели — предобученная модель
-для работы с исходным кодом.
+The goal of this project is to develop a Python solution for predicting a
+function name from its implementation. The source data consists of real
+functions from open-source repositories, and prediction is performed with a
+pretrained model designed for source code.
 
-Например, для функции:
+For example, for the function:
 
 ```python
 def some_function(x):
@@ -15,123 +15,119 @@ def some_function(x):
     return [i + 1 for i in x]
 ```
 
-подходящим предсказанным именем может быть `increment_list_elements`.
+a suitable predicted name might be `increment_list_elements`.
 
-В рамках задания требовалось:
+The assignment required:
 
-1. Подготовить набор данных с телами функций и их именами.
-2. Выделить варианты тела функции с документацией и без неё.
-3. Запустить предобученную модель без дополнительного обучения.
-4. Сравнить качество генерации для двух вариантов входных данных.
+1. Preparing a dataset of function bodies and names.
+2. Producing input variants with and without documentation.
+3. Running a pretrained model without additional training.
+4. Comparing generation quality for the two input variants.
 
-## Используемые данные
+## Dataset
 
-В работе используется тестовая часть набора данных
-[CodeSearchNet](https://huggingface.co/datasets/code-search-net/code_search_net)
-для языка Python. Для эксперимента выбраны первые 1 000 функций.
+The project uses the Python test split of
+[CodeSearchNet](https://huggingface.co/datasets/code-search-net/code_search_net).
+The experiment evaluates its first 1,000 functions.
 
-Исходный набор содержит:
+The original dataset includes:
 
-- полный текст функции;
-- её имя;
-- документацию;
-- сведения о репозитории и расположении функции.
+- complete function source code;
+- the function name;
+- documentation;
+- repository and file-location information.
 
-Поле `func_name` может содержать квалифицированное имя метода, например
-`ClassA.foo`, поэтому имя объявленной функции дополнительно извлекается из
-синтаксического дерева.
+The `func_name` field can contain a qualified method name such as
+`ClassA.foo`, so the declared function name is additionally extracted from the
+syntax tree.
 
-## Выполненные этапы
+## Workflow
 
-### 1. Подготовка данных
+### 1. Data Preparation
 
-Эксперимент подготовки данных проведён в блокноте
+Data preparation is implemented in
 [`01_data_preparation.ipynb`](./01_data_preparation.ipynb).
 
-Для разбора исходного кода используется библиотека `tree-sitter`. Она
-позволяет работать с синтаксической структурой Python-функции, а не извлекать
-элементы ненадёжным поиском по строкам.
+Source code is parsed using `tree-sitter`, which operates on the syntactic
+structure of a Python function instead of relying on fragile string matching.
 
-Для каждого примера формируются поля:
+For each example, the notebook creates:
 
-- `parsed_func_name` — имя функции, извлечённое из синтаксического дерева;
-- `body_no_comments` — тело функции без строки документации и комментариев;
-- `body_with_comments` — тело функции с документацией и комментариями.
+- `parsed_func_name`, the function name extracted from the syntax tree;
+- `body_no_comments`, the function body without its docstring and comments;
+- `body_with_comments`, the body retaining documentation and comments.
 
-Все выбранные 1 000 функций были успешно обработаны. У каждой из них
-присутствует строка документации, а в 368 функциях встречаются дополнительные
-комментарии.
+All 1,000 selected functions were processed successfully. Each contains a
+docstring, while 368 functions also contain additional comments.
 
-### 2. Генерация имён функций
+### 2. Function Name Generation
 
-Эксперимент с моделью проведён в блокноте
+The model experiment is implemented in
 [`02_model_experiment.ipynb`](./02_model_experiment.ipynb).
 
-Используется предобученная модель `Salesforce/codet5p-220m` без
-дополнительного обучения. Имя функции заменяется специальным маркером
-`<extra_id_0>`, после чего модель должна восстановить подходящий идентификатор
-по телу функции.
+It uses the pretrained `Salesforce/codet5p-220m` model without additional
+training. The function name is replaced with the special `<extra_id_0>` token,
+and the model reconstructs a suitable identifier from the function body.
 
-Сравниваются два варианта входных данных:
+Two input variants are compared:
 
-1. Только исполняемый код функции.
-2. Исполняемый код вместе со строкой документации и комментариями.
+1. Executable function code only.
+2. Executable code with the docstring and comments.
 
-Параметры генерации:
+Generation parameters:
 
-| Параметр | Значение |
+| Parameter | Value |
 | --- | --- |
-| Максимальная длина входа | 512 токенов |
-| Размер пакета | 8 |
-| Количество вариантов при поиске | 5 |
-| Максимальная длина ответа | 16 токенов |
+| Maximum input length | 512 tokens |
+| Batch size | 8 |
+| Beam search width | 5 |
+| Maximum generated length | 16 tokens |
 
-Качество оценивается метриками:
+Quality is measured with:
 
-- **Exact Match** — доля имён, полностью совпавших с эталоном;
-- **ROUGE** — степень совпадения частей предсказанного и эталонного имён.
+- **Exact Match**, the share of names that exactly equal the reference;
+- **ROUGE**, overlap between generated and reference identifiers.
 
-## Результаты
+## Results
 
-| Входные данные | Exact Match | ROUGE-1 | ROUGE-2 | ROUGE-L |
+| Input data | Exact Match | ROUGE-1 | ROUGE-2 | ROUGE-L |
 | --- | ---: | ---: | ---: | ---: |
-| Только код | 0.143 | 0.384 | 0.198 | 0.381 |
-| Код, документация и комментарии | 0.184 | 0.467 | 0.267 | 0.465 |
+| Code only | 0.143 | 0.384 | 0.198 | 0.381 |
+| Code, documentation, and comments | 0.184 | 0.467 | 0.267 | 0.465 |
 
-Добавление документации и комментариев улучшило все измеренные показатели.
-Например, для эталонного имени `get_vid_from_url` модель без документации
-предлагала `parse_query_param`, а при наличии строки документации —
-`extract_video_id`, то есть имя, лучше отражающее назначение функции.
+Adding documentation and comments improved every measured score. For example,
+for the reference name `get_vid_from_url`, the model suggested
+`parse_query_param` without documentation and `extract_video_id` when a
+docstring was available, which better communicates the function's purpose.
 
-Значение Exact Match остаётся сравнительно небольшим, поскольку одна и та же
-функция может иметь несколько корректных по смыслу имён. Поэтому его следует
-рассматривать вместе с метриками ROUGE.
+Exact Match remains relatively low because one function can have several
+semantically correct names. It should therefore be considered together with
+the ROUGE scores.
 
-## Выводы
+## Conclusions
 
-В работе подготовлен набор данных на основе реальных Python-функций, выполнен
-их синтаксический разбор и проведена генерация имён с помощью CodeT5+.
+The project prepares a dataset of real Python functions, parses their syntax,
+and generates names with CodeT5+.
 
-Эксперимент показал, что даже без дополнительного обучения модель способна
-предлагать осмысленные имена функций. Наличие документации и комментариев
-существенно улучшает результат: Exact Match увеличился с `0.143` до `0.184`,
-а ROUGE-1 — с `0.384` до `0.467`.
+The experiment shows that even without additional training, the model can
+suggest meaningful function names. Documentation and comments substantially
+improve performance: Exact Match increased from `0.143` to `0.184`, while
+ROUGE-1 increased from `0.384` to `0.467`.
 
-Ограничениями решения являются отсутствие дополнительного обучения модели,
-ограничение длины входа до 512 токенов и строгость оценки по одному эталонному
-имени.
+Limitations include the lack of task-specific model training, the 512-token
+input limit, and evaluation against a single reference name.
 
-## Структура проекта
+## Project Structure
 
 ```text
 02-func-name-suggestion/
-├── 01_data_preparation.ipynb       # подготовка данных
-├── 02_model_experiment.ipynb       # генерация имён и оценка
-├── 03_conclusions.ipynb            # итоговые выводы
-└── requirements.txt                # зависимости
+├── 01_data_preparation.ipynb # data preparation
+├── 02_model_experiment.ipynb # function-name generation and evaluation
+├── 03_conclusions.ipynb      # final conclusions
+└── requirements.txt          # dependencies
 ```
 
-## Запуск
+## Running the Project
 
 ```bash
 python -m venv .venv
@@ -140,11 +136,11 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-Блокноты необходимо выполнить по порядку:
+Execute the notebooks in order:
 
 1. `01_data_preparation.ipynb`;
 2. `02_model_experiment.ipynb`;
 3. `03_conclusions.ipynb`.
 
-После первого шага подготовленный набор данных сохраняется в каталог
-`artifacts/`. Этот каталог создаётся при запуске и не хранится в репозитории.
+After the first step, the prepared dataset is saved under `artifacts/`. This
+directory is generated on demand and is not tracked in the repository.

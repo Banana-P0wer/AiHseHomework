@@ -101,8 +101,7 @@ different identifiers may describe the same function correctly.
 
 ## Running the Projects
 
-Each project has its own dependency file and detailed Russian-language
-documentation:
+Each project has its own dependency file and detailed documentation:
 
 ```bash
 cd 01-toxic-review-classification

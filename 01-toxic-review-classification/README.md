@@ -1,155 +1,145 @@
-# Практическое задание №1: классификация токсичных комментариев
+# Practical Assignment 01: Toxic Comment Classification
 
-## Описание задания
+## Problem Statement
 
-Цель работы — разработать решение на языке Python, которое классифицирует
-комментарии к исходному коду на **токсичные** и **нетоксичные**.
+The goal of this project is to develop a Python solution that classifies
+comments on source code as **toxic** or **non-toxic**.
 
-В рамках задания требовалось:
+The assignment required:
 
-1. Подготовить размеченные комментарии из набора данных
-   [ToxiCR](https://github.com/WSU-SEAL/ToxiCR/tree/master).
-2. Обучить классическую модель машинного обучения на текстовых признаках.
-3. Обучить модель на основе трансформера.
-4. Сравнить подходы по метрикам качества и проанализировать результаты.
+1. Preparing labeled comments from the
+   [ToxiCR](https://github.com/WSU-SEAL/ToxiCR/tree/master) dataset.
+2. Training a classical machine learning model on textual features.
+3. Training a transformer-based model.
+4. Comparing the approaches using evaluation metrics and analyzing the results.
 
-## Используемые данные
+## Dataset
 
-Каждая запись содержит текст комментария к исходному коду и бинарную метку
-`is_toxic`:
+Each record contains a code review comment and a binary `is_toxic` label:
 
-- `0` — нетоксичный комментарий;
-- `1` — токсичный комментарий.
+- `0` means a non-toxic comment;
+- `1` means a toxic comment.
 
-После очистки получены следующие размеры выборок:
+The cleaning step produced the following dataset sizes:
 
-| Выборка | Исходных строк | После очистки | Нетоксичных | Токсичных |
+| Split | Raw rows | Cleaned rows | Non-toxic | Toxic |
 | --- | ---: | ---: | ---: | ---: |
-| Обучающая | 19 571 | 12 707 | 10 215 | 2 492 |
-| Тестовая | 230 | 228 | 119 | 109 |
+| Train | 19,571 | 12,707 | 10,215 | 2,492 |
+| Test | 230 | 228 | 119 | 109 |
 
-## Выполненные этапы
+## Workflow
 
-### 1. Предобработка данных
+### 1. Data Preparation
 
-Предобработка реализована в блокноте
+Data preparation is implemented in
 [`01_data_preparation.ipynb`](./01_data_preparation.ipynb).
-Он загружает исходные таблицы, очищает комментарии, показывает статистику
-обработки и сохраняет подготовленные файлы `clean_train.csv` и
-`clean_test.csv`.
+The notebook loads the source tables, cleans the comments, displays processing
+statistics, and saves `clean_train.csv` and `clean_test.csv`.
 
-Выполняются следующие операции:
+The processing step includes:
 
-- удаление ссылок и адресов электронной почты;
-- нормализация Unicode-символов и нестандартных апострофов;
-- раскрытие распространённых английских сокращений, например
-  `doesn't` → `does not`;
-- нормализация замаскированных ругательств с использованием словаря
-  `profane-words.txt`;
-- уменьшение искусственных повторов букв в обычных словах;
-- сохранение значимых технических обозначений и слов, связанных с
-  программированием;
-- удаление пустых строк и дубликатов.
+- removing links and email addresses;
+- normalizing Unicode characters and non-standard apostrophes;
+- expanding common English contractions, for example
+  `doesn't` to `does not`;
+- normalizing obfuscated profanity using `profane-words.txt`;
+- reducing artificial character repetition in ordinary words;
+- preserving meaningful technical notation and programming-related words;
+- removing empty rows and duplicates.
 
-### 2. Классическая модель
+### 2. Classical Model
 
-Эксперимент проведён в блокноте
+The experiment is implemented in
 [`02_classic_model.ipynb`](./02_classic_model.ipynb).
 
-Для представления текста используется `TfidfVectorizer` со следующими
-настройками:
+Text is represented with `TfidfVectorizer` using:
 
-- униграммы и биграммы: `ngram_range=(1, 2)`;
-- не более 20 000 признаков;
-- исключение слишком редких признаков: `min_df=2`.
+- unigrams and bigrams: `ngram_range=(1, 2)`;
+- at most 20,000 features;
+- rare-feature filtering: `min_df=2`.
 
-В качестве классификатора используется логистическая регрессия с
-`class_weight="balanced"`, чтобы учитывать несбалансированность обучающей
-выборки.
+The classifier is logistic regression with `class_weight="balanced"` to
+account for class imbalance in the training split.
 
-### 3. Модель RoBERTa
+### 3. RoBERTa Model
 
-Эксперимент проведён в блокноте
+The experiment is implemented in
 [`03_transformer_model.ipynb`](./03_transformer_model.ipynb).
 
-Используется предобученная модель `roberta-base`, дополненная слоем
-классификации для двух меток. Параметры обучения:
+The pretrained `roberta-base` model is extended with a binary classification
+head. Training parameters:
 
-| Параметр | Значение |
+| Parameter | Value |
 | --- | --- |
-| Максимальная длина текста | 128 токенов |
-| Размер пакета | 8 |
-| Количество эпох | 3 |
-| Скорость обучения | `1e-5` |
-| Оптимизатор | `AdamW` |
+| Maximum sequence length | 128 tokens |
+| Batch size | 8 |
+| Epochs | 3 |
+| Learning rate | `1e-5` |
+| Optimizer | `AdamW` |
 
-Обученная модель сохраняется в каталог `models/roberta-toxic/`. Этот каталог
-не хранится в репозитории, так как его можно заново получить запуском
-блокнота.
+The trained model is saved to `models/roberta-toxic/`. This generated
+directory is not tracked because it can be recreated by running the notebook.
 
-## Результаты
+## Results
 
-### Сравнение моделей
+### Model Comparison
 
-| Модель | Accuracy | Precision для токсичных | Recall для токсичных | F1 для токсичных |
+| Model | Accuracy | Toxic precision | Toxic recall | Toxic F1 |
 | --- | ---: | ---: | ---: | ---: |
 | TF-IDF + Logistic Regression | 0.912 | 0.894 | 0.927 | 0.910 |
 | RoBERTa | 0.925 | 0.897 | 0.954 | 0.924 |
 
-Обе модели существенно превысили ориентир задания `F1 ≈ 0.7`.
-Модель RoBERTa показала немного лучший результат, прежде всего за счёт более
-высокой полноты обнаружения токсичных комментариев.
+Both models substantially exceeded the assignment reference level of
+`F1 approximately 0.7`. RoBERTa achieved a slightly better result, primarily
+through higher recall for toxic comments.
 
-### Интерпретация результатов классической модели
+### Interpreting the Classical Model
 
-Для логистической регрессии можно напрямую исследовать веса признаков.
-Среди слов, сильнее всего связанных с токсичным классом, оказались `ugly`,
-`darn`, `sucks`, `crap` и `hate`.
+The weights of logistic regression can be directly inspected. Terms most
+strongly associated with the toxic class include `ugly`, `darn`, `sucks`,
+`crap`, and `hate`.
 
-Среди признаков нетоксичного класса встречаются `remove`, `kill`, `pid`,
-`question` и `self`. Это показывает важность предметной области: например,
-слово `kill` в обсуждении кода может обозначать завершение процесса, а не
-оскорбление.
+Features associated with the non-toxic class include `remove`, `kill`, `pid`,
+`question`, and `self`. This illustrates the importance of domain context:
+for example, `kill` may refer to terminating a process rather than abuse.
 
-### Интерпретация результатов RoBERTa
+### Interpreting RoBERTa
 
-В отличие от линейной модели, классификационный слой RoBERTa работает со
-скрытым представлением всего текста, а не с весами отдельных слов. Поэтому
-для него нельзя корректно вывести список «наиболее токсичных токенов» тем же
-способом, что и для TF-IDF. В данном эксперименте это отражает основной
-компромисс: RoBERTa точнее, но её решение менее прозрачно для
-непосредственного анализа.
+Unlike the linear model, RoBERTa's classification head operates on a hidden
+representation of the entire text rather than on weights of individual words.
+It is therefore not correct to derive a list of the "most toxic tokens" in the
+same way as for TF-IDF. In this experiment, that reflects the main trade-off:
+RoBERTa is more accurate but less directly interpretable.
 
-## Выводы
+## Conclusions
 
-В работе реализована полная последовательность решения задачи: очистка
-размеченных комментариев, обучение двух моделей и сравнение их качества.
+The project implements the full workflow: cleaning labeled comments, training
+two models, and comparing their quality.
 
-Классическая модель на основе TF-IDF и логистической регрессии дала высокий и
-легко объяснимый результат: `F1 = 0.910` для токсичного класса. Модель
-RoBERTa повысила этот показатель до `F1 = 0.924`, лучше учитывая контекст
-комментариев, но требуя больше вычислительных ресурсов и предоставляя менее
-интерпретируемые признаки.
+The classical TF-IDF and logistic regression approach achieved a strong and
+readily interpretable result of `F1 = 0.910` for the toxic class. RoBERTa
+increased this result to `F1 = 0.924` by capturing context more effectively,
+at the cost of greater computational demand and less interpretable features.
 
-Итоговое сравнение моделей также оформлено в отдельном блокноте
+The final comparison is also recorded in
 [`04_conclusions.ipynb`](./04_conclusions.ipynb).
 
-## Структура проекта
+## Project Structure
 
 ```text
 01-toxic-review-classification/
 ├── data/
-│   ├── raw/                  # исходные данные
-│   ├── lexicons/             # словари для очистки текста
-│   └── preprocessed/         # очищенные данные
-├── 01_data_preparation.ipynb # подготовка данных
-├── 02_classic_model.ipynb    # TF-IDF + Logistic Regression
+│   ├── raw/                   # original data
+│   ├── lexicons/              # dictionaries used during cleaning
+│   └── preprocessed/          # cleaned data
+├── 01_data_preparation.ipynb  # data preparation
+├── 02_classic_model.ipynb     # TF-IDF + Logistic Regression
 ├── 03_transformer_model.ipynb # RoBERTa
-├── 04_conclusions.ipynb      # итоговые выводы
-└── requirements.txt          # зависимости
+├── 04_conclusions.ipynb       # final conclusions
+└── requirements.txt           # dependencies
 ```
 
-## Запуск
+## Running the Project
 
 ```bash
 python -m venv .venv
@@ -158,7 +148,7 @@ pip install -r requirements.txt
 jupyter lab
 ```
 
-Блокноты необходимо выполнить по порядку:
+Execute the notebooks in order:
 
 1. `01_data_preparation.ipynb`;
 2. `02_classic_model.ipynb`;
